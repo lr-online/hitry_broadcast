@@ -19,7 +19,8 @@
 
 			function start() {
 				// 创建websocket连接
-				!ws && (ws = new WebSocket("ws://10.0.5.136:8000/OpenAPI/pcmData"));
+				const host = location.host;
+				!ws && (ws = new WebSocket(`ws://${host}/OpenAPI/pcmData`));
 				// ws.binaryType = "arraybuffer";
 				// 请求音频权限并获取媒体流
 				navigator.mediaDevices
@@ -88,20 +89,20 @@
 							// 停止获取音频流
 							stream.getTracks().forEach((track) => track.stop());
 							// 将存储的数据转换为Blob对象
-							const audioBlob = new Blob(audioChunks, { type: "audio/pcm" });
+							// const audioBlob = new Blob(audioChunks, { type: "audio/pcm" });
 							// 创建一个URL，用于播放音频数据
-							const audioUrl = URL.createObjectURL(audioBlob);
+							// const audioUrl = URL.createObjectURL(audioBlob);
 
 							// 在控制台输出音频数据URL
-							console.log(audioUrl);
+							// console.log(audioUrl);
 
 							// 通过a标签下载
-							const a = document.createElement("a");
-							a.href = audioUrl;
-							a.download = "test.pcm";
-							a.click();
-							a.remove();
-							URL.revokeObjectURL(audioUrl);
+							// const a = document.createElement("a");
+							// a.href = audioUrl;
+							// a.download = "test.pcm";
+							// a.click();
+							// a.remove();
+							// URL.revokeObjectURL(audioUrl);
 						});
 
 						// 开始录制音频数据

@@ -191,7 +191,6 @@ class BroadcastHandler(WebSocketHandler):
             logger.info(f"开始广播任务：{self.task_id}")
 
     async def on_message(self, message):
-        logger.debug(f"recv pcm: {message}")
         try:
             async with IDMP(**idmp_conf) as idmp_server:
                 await idmp_server.send_pcm(
