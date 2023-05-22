@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<button id="start">开始录制</button>
+		<button id="stop">停止录制</button>
+
+		<script>
+			document.getElementById("start").addEventListener("click", start);
+			document.getElementById("stop").addEventListener("click", stop);
+
+			let mediaRecorder = null;
+			let ws = null;
+
+			function start() {
+				// 创建websocket连接
+				!ws && (ws = new WebSocket("ws://10.0.5.136:8000/OpenAPI/pcmData"));
+				// ws.binaryType = "arraybuffer";
+				// 请求音频权限并获取媒体流
+				navigator.mediaDevices
+					.getUserMedia({
+						audio: {
+							// 采样率为16kHz
+							sampleRate: 16000,
+							// 通道数为1
+							channelCount: 1,
+						},
+					})
+					.then((stream) => {
+						// 创建MediaRecorder对象
+						mediaRecorder = new MediaRecorder(stream, {
+							// 指定音频格式
+							mimeType: "audio/webm;codecs=pcm",
+							// 比特率为24kbps
+							audioBitsPerSecond: 24000,
+						});
+
+						// 初始化数据存储变量
+						const audioChunks = [];
+
+						// 监听录制开始事件
+						mediaRecorder.addEventListener("start", (event) => {
+							console.log("录制开始");
+						});
+
+						// 监听录制数据事件
+						mediaRecorder.addEventListener("dataavailable", async (event) => {
+							const audioChunk = event.data;
+							// const arrayBuffer = audioChunk;
+							// const arrayBuffer = await blobToArrayBuffer(audioChunk);
+							const arrayBuffer = await audioChunk.arrayBuffer();
+							console.log(arrayBuffer);
+							if (ws) {
+								// 将audioChunk通过websocket发送到服务端
+								ws.onopen = function () {
+									console.log("连接成功");
+									ws.send(arrayBuffer);
+								};
+								ws.onmessage = function (evt) {
+									console.log(evt.data);
+								};
+								ws.onclose = function () {
+									console.log("连接关闭");
+									stop();
+								};
+								ws.onerror = function () {
+									console.log("连接出错");
+									stop();
+								};
+								ws.readyState === 1 && ws.send(arrayBuffer);
+							}
+							// 将数据存储到数组中
+							audioChunks.push(audioChunk);
+						});
+
+						// 监听录制结束事件
+						mediaRecorder.addEventListener("stop", () => {
+							console.log("录制结束");
+							console.log(audioChunks);
+							// 断开websocket连接
+							ws?.close();
+
+							// 停止获取音频流
+							stream.getTracks().forEach((track) => track.stop());
+							// 将存储的数据转换为Blob对象
+							const audioBlob = new Blob(audioChunks, { type: "audio/pcm" });
+							// 创建一个URL，用于播放音频数据
+							const audioUrl = URL.createObjectURL(audioBlob);
+
+							// 在控制台输出音频数据URL
+							console.log(audioUrl);
+
+							// 通过a标签下载
+							const a = document.createElement("a");
+							a.href = audioUrl;
+							a.download = "test.pcm";
+							a.click();
+							a.remove();
+							URL.revokeObjectURL(audioUrl);
+						});
+
+						// 开始录制音频数据
+						mediaRecorder.start(500);
+					})
+					.catch((error) => {
+						console.log(error);
+					});
+			}
+			function stop() {
+				mediaRecorder?.stop();
+				ws?.close();
+				ws = null;
+			}
+			// 将Blob对象转换为ArrayBuffer
+			function blobToArrayBuffer(blob) {
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => {
+						resolve(reader.result);
+					};
+					reader.onerror = reject;
+					reader.readAsArrayBuffer(blob);
+				});
+			}
+		</script>
+	</body>
+</html>
