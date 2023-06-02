@@ -21,7 +21,6 @@
 				// 创建websocket连接
 				const host = location.host;
 				!ws && (ws = new WebSocket(`ws://${host}/OpenAPI/pcmData`));
-				// ws.binaryType = "arraybuffer";
 				// 请求音频权限并获取媒体流
 				navigator.mediaDevices
 					.getUserMedia({
@@ -51,9 +50,6 @@
 							audioBitsPerSecond: 24000,
 						});
 
-						// 初始化数据存储变量
-						const audioChunks = [];
-
 						// 监听录制开始事件
 						mediaRecorder.addEventListener("start", (event) => {
 							console.log("录制开始");
@@ -62,15 +58,12 @@
 						// 监听录制数据事件
 						mediaRecorder.addEventListener("dataavailable", async (event) => {
 							const audioChunk = event.data;
-							// const arrayBuffer = audioChunk;
-							// const arrayBuffer = await blobToArrayBuffer(audioChunk);
 							const arrayBuffer = await audioChunk.arrayBuffer();
 							console.log(arrayBuffer);
 							if (ws) {
 								// 将audioChunk通过websocket发送到服务端
 								ws.onopen = function () {
 									console.log("连接成功");
-									ws.send(arrayBuffer);
 								};
 								ws.onmessage = function (evt) {
 									console.log(evt.data);
@@ -85,8 +78,6 @@
 								};
 								ws.readyState === 1 && ws.send(arrayBuffer);
 							}
-							// 将数据存储到数组中
-							audioChunks.push(audioChunk);
 						});
 
 						// 监听录制结束事件
@@ -111,17 +102,6 @@
 				mediaRecorder?.stop();
 				ws?.close();
 				ws = null;
-			}
-			// 将Blob对象转换为ArrayBuffer
-			function blobToArrayBuffer(blob) {
-				return new Promise((resolve, reject) => {
-					const reader = new FileReader();
-					reader.onload = () => {
-						resolve(reader.result);
-					};
-					reader.onerror = reject;
-					reader.readAsArrayBuffer(blob);
-				});
 			}
 		</script>
 	</body>
