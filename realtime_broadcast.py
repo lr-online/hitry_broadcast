@@ -1,3 +1,4 @@
+import os
 import uuid
 import wave
 from typing import Awaitable, List, Optional
@@ -238,9 +239,9 @@ class BroadcastHandler(WebSocketHandler):
         except Exception as e:
             await self.write_message(f"发送音频流失败")
         finally:
-            # # 删除pcm文件和wav文件
-            # os.remove(pcm_file)
-            # os.remove(wav_file)
+            # 删除pcm文件和wav文件
+            os.remove(pcm_file)
+            os.remove(wav_file)
             logger.info(f"发送音频流结束")
 
     def on_close(self):
