@@ -27,9 +27,19 @@
 					.getUserMedia({
 						audio: {
 							// 采样率为16kHz
-							sampleRate: 16000,
+							sampleRate: 48000,
 							// 通道数为1
 							channelCount: 1,
+							// 采样位数为16位
+							sampleSize: 16,
+							// 采样格式为整型
+							sampleFormat: "int",
+							// 是否使用自动增益
+							autoGainControl: true,
+							// 是否使用回声消除
+							echoCancellation: true,
+							// 是否使用噪声抑制
+							noiseSuppression: true,
 						},
 					})
 					.then((stream) => {
@@ -82,27 +92,12 @@
 						// 监听录制结束事件
 						mediaRecorder.addEventListener("stop", () => {
 							console.log("录制结束");
-							console.log(audioChunks);
 							// 断开websocket连接
 							ws?.close();
 
 							// 停止获取音频流
 							stream.getTracks().forEach((track) => track.stop());
-							// 将存储的数据转换为Blob对象
-							// const audioBlob = new Blob(audioChunks, { type: "audio/pcm" });
-							// 创建一个URL，用于播放音频数据
-							// const audioUrl = URL.createObjectURL(audioBlob);
 
-							// 在控制台输出音频数据URL
-							// console.log(audioUrl);
-
-							// 通过a标签下载
-							// const a = document.createElement("a");
-							// a.href = audioUrl;
-							// a.download = "test.pcm";
-							// a.click();
-							// a.remove();
-							// URL.revokeObjectURL(audioUrl);
 						});
 
 						// 开始录制音频数据
