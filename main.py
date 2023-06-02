@@ -69,12 +69,12 @@ class IDMP(object):
             url = self.build_url(path=url)
 
         async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=3)
+            timeout=aiohttp.ClientTimeout(total=3)
         ) as session:
             async with session.request(
-                    method=method,
-                    url=url,
-                    **kwargs,
+                method=method,
+                url=url,
+                **kwargs,
             ) as resp:
                 resp_body = await resp.text()
                 logger.debug(f"{method} {url} {kwargs}-->{resp.status} {resp_body}")
@@ -118,11 +118,11 @@ class IDMP(object):
         logger.debug(f"从IDMP服务获取到新的token:{self.token}")
 
     async def start_pcm_broadcast(
-            self,
-            sample_rate: int,
-            terminal_ids: Optional[List[str]] = None,
-            to_all_terminal: bool = True,
-            is_strong_cur: bool = True,
+        self,
+        sample_rate: int,
+        terminal_ids: Optional[List[str]] = None,
+        to_all_terminal: bool = True,
+        is_strong_cur: bool = True,
     ):
         """
         发起实时语音广播
@@ -165,12 +165,12 @@ class IDMP(object):
 
     async def send_pcm(self, task_id: str, chunk: bytes):
         async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=3)
+            timeout=aiohttp.ClientTimeout(total=3)
         ) as session:
             async with session.ws_connect(
-                    self.build_url(
-                        "/OpenAPI/pcmData", {"token": self.token, "taskId": task_id}
-                    )
+                self.build_url(
+                    "/OpenAPI/pcmData", {"token": self.token, "taskId": task_id}
+                )
             ) as ws:
                 logger.debug(f"send {len(chunk)} pcm data")
                 await ws.send_bytes(chunk)
@@ -196,8 +196,8 @@ class BroadcastHandler(WebSocketHandler):
             task_id = await idmp_server.start_pcm_broadcast(
                 sample_rate=48000,
                 terminal_ids=[
-                    "10138ae9993743e9a5b81ffe1c906165",  # 网红沙滩
-                    # "2ec1ea90c7444bfead53dbf7cbd25270",  # 办公室
+                    # "10138ae9993743e9a5b81ffe1c906165",  # 网红沙滩
+                    "2ec1ea90c7444bfead53dbf7cbd25270",  # 办公室
                 ],
                 to_all_terminal=False,
                 is_strong_cur=True,
@@ -255,6 +255,7 @@ class BroadcastHandler(WebSocketHandler):
                 await idmp_server.stop_pcm_broadcast(task_id=self.task_id)
 
             logger.info(f"所有PCM连接接都已断开:{self.task_id}")
+
         IOLoop.current().add_callback(foo)
 
     def check_origin(self, origin):

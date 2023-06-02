@@ -68,7 +68,10 @@ async def play_pcm_file_on_hitry_speaker(pcm_path):
     async with IDMP(**idmp_conf) as idmp_server:
         task_id = await idmp_server.start_pcm_broadcast(
             sample_rate=48000,
-            terminal_ids=["10138ae9993743e9a5b81ffe1c906165"],
+            terminal_ids=[
+                # "10138ae9993743e9a5b81ffe1c906165",  # 网红沙滩
+                "2ec1ea90c7444bfead53dbf7cbd25270",  # 办公室
+            ],
             to_all_terminal=False,
             is_strong_cur=True,
         )
@@ -157,5 +160,9 @@ if __name__ == "__main__":
     # asyncio.run(play_pcm_file_on_hitry_speaker("good_3248.pcm"))
     # play_pcm_file_on_mac("./good_3248.pcm")
     # play_wav_file_on_mac("/Users/liangrui/Desktop/ddd.wav")
-    asyncio.run(play_wav_file_on_hitry_speaker("/Users/liangrui/PycharmProjects/hitry_broadcast_demo/wav/ed9fe8ef7d91493fa24ec612152092df.wav"))
+    asyncio.run(
+        play_wav_file_on_hitry_speaker(
+            "/Users/liangrui/PycharmProjects/hitry_broadcast_demo/wav/ed9fe8ef7d91493fa24ec612152092df.wav"
+        )
+    )
     # asyncio.run(play_wav_file_on_hitry_speaker("/Users/liangrui/Downloads/test.wav"))
