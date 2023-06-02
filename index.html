@@ -21,6 +21,20 @@
 				// 创建websocket连接
 				const host = location.host;
 				!ws && (ws = new WebSocket(`ws://${host}/OpenAPI/pcmData`));
+				ws.onopen = function () {
+					console.log("连接成功");
+				};
+				ws.onmessage = function (evt) {
+					console.log(evt.data);
+				};
+				ws.onclose = function () {
+					console.log("连接关闭");
+					stop();
+				};
+				ws.onerror = function () {
+					console.log("连接出错");
+					stop();
+				};
 				// 请求音频权限并获取媒体流
 				navigator.mediaDevices
 					.getUserMedia({
@@ -47,7 +61,7 @@
 							// 指定音频格式
 							mimeType: "audio/webm;codecs=pcm",
 							// 比特率为24kbps
-							audioBitsPerSecond: 24000,
+							// audioBitsPerSecond: 24000,
 						});
 
 						// 监听录制开始事件
@@ -57,25 +71,12 @@
 
 						// 监听录制数据事件
 						mediaRecorder.addEventListener("dataavailable", async (event) => {
+							console.log("dataavailable");
 							const audioChunk = event.data;
 							const arrayBuffer = await audioChunk.arrayBuffer();
 							console.log(arrayBuffer);
 							if (ws) {
 								// 将audioChunk通过websocket发送到服务端
-								ws.onopen = function () {
-									console.log("连接成功");
-								};
-								ws.onmessage = function (evt) {
-									console.log(evt.data);
-								};
-								ws.onclose = function () {
-									console.log("连接关闭");
-									stop();
-								};
-								ws.onerror = function () {
-									console.log("连接出错");
-									stop();
-								};
 								ws.readyState === 1 && ws.send(arrayBuffer);
 							}
 						});
