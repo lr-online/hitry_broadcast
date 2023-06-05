@@ -11,13 +11,17 @@
 		<button id="stop">停止录制</button>
 
 		<script>
-			document.getElementById("start").addEventListener("click", start);
-			document.getElementById("stop").addEventListener("click", stop);
+			document.getElementById("start").addEventListener("click", startRecording);
+			document.getElementById("stop").addEventListener("click", () => stopRecording(true));
 
 			let mediaRecorder = null;
 			let ws = null;
+			let mediaRecorderStream = null;
+			const arrayBuffers = [];
+			const recordingDuration = 3000; // 每段录音的持续时间（毫秒）
+			let timerId; // 定时器id
 
-			function start() {
+			function init() {
 				// 创建websocket连接
 				const host = location.host;
 				!ws && (ws = new WebSocket(`ws://${host}/OpenAPI/pcmData`));
@@ -35,6 +39,7 @@
 					console.log("连接出错");
 					stop();
 				};
+
 				// 请求音频权限并获取媒体流
 				navigator.mediaDevices
 					.getUserMedia({
@@ -56,6 +61,7 @@
 						},
 					})
 					.then((stream) => {
+						mediaRecorderStream = stream;
 						// 创建MediaRecorder对象
 						mediaRecorder = new MediaRecorder(stream, {
 							// 指定音频格式
@@ -74,35 +80,55 @@
 							console.log("dataavailable");
 							const audioChunk = event.data;
 							const arrayBuffer = await audioChunk.arrayBuffer();
-							console.log(arrayBuffer);
-							if (ws) {
-								// 将audioChunk通过websocket发送到服务端
-								ws.readyState === 1 && ws.send(arrayBuffer);
-							}
+							arrayBuffers.push(arrayBuffer);
 						});
 
 						// 监听录制结束事件
 						mediaRecorder.addEventListener("stop", () => {
 							console.log("录制结束");
-							// 断开websocket连接
-							ws?.close();
-
-							// 停止获取音频流
-							stream.getTracks().forEach((track) => track.stop());
-
+							if (ws) {
+								// 将arrayBuffers通过websocket发送到服务端
+								ws.readyState === 1 && ws.send(...arrayBuffers);
+							}
+							getFile();
 						});
 
-						// 开始录制音频数据
-						mediaRecorder.start(3000);
+						mediaRecorder.start();
 					})
 					.catch((error) => {
 						console.log(error);
 					});
 			}
-			function stop() {
+
+			async function startRecording() {
+				!mediaRecorder && init();
+				// 开始录制音频数据
+				mediaRecorder?.start();
+				timerId = setTimeout(stopRecording, recordingDuration);
+			}
+			function stopRecording(isDisconnect = false) {
 				mediaRecorder?.stop();
-				ws?.close();
-				ws = null;
+				clearTimeout(timerId);
+				if (isDisconnect) {
+					ws?.close();
+					ws = null;
+					// 停止获取音频流
+					mediaRecorderStream.getTracks().forEach((track) => track.stop());
+				} else {
+					startRecording(); // 开始下一段录音
+				}
+			}
+			function getFile() {
+				if (!arrayBuffers.length) return;
+				console.log("getFile", arrayBuffers);
+				const blob = new Blob(arrayBuffers, { type: "audio/pcm" });
+				const a = document.createElement("a");
+				a.download = "zy.pcm";
+				a.href = URL.createObjectURL(blob);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(blob);
+				arrayBuffers.length = 0;
 			}
 		</script>
 	</body>
